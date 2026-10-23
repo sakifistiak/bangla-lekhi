@@ -1,0 +1,126 @@
+[
+  {
+    "category": "Basic Vowels",
+    "cases": [
+      {"input": "o", "expected": "অ"},
+      {"input": "a", "expected": "আ"},
+      {"input": "i", "expected": "ই"},
+      {"input": "I", "expected": "ঈ"},
+      {"input": "u", "expected": "উ"},
+      {"input": "U", "expected": "ঊ"},
+      {"input": "e", "expected": "এ"},
+      {"input": "OI", "expected": "ঐ"},
+      {"input": "O", "expected": "ও"},
+      {"input": "OU", "expected": "ঔ"}
+    ]
+  },
+  {
+    "category": "Basic Consonants",
+    "cases": [
+      {"input": "k", "expected": "ক"},
+      {"input": "kh", "expected": "খ"},
+      {"input": "g", "expected": "গ"},
+      {"input": "gh", "expected": "ঘ"},
+      {"input": "Ng", "expected": "ঙ"},
+      {"input": "c", "expected": "চ"},
+      {"input": "ch", "expected": "ছ"},
+      {"input": "j", "expected": "জ"},
+      {"input": "jh", "expected": "ঝ"},
+      {"input": "T", "expected": "ট"},
+      {"input": "Th", "expected": "ঠ"},
+      {"input": "D", "expected": "ড"},
+      {"input": "Dh", "expected": "ঢ"},
+      {"input": "N", "expected": "ণ"},
+      {"input": "t", "expected": "ত"},
+      {"input": "th", "expected": "থ"},
+      {"input": "d", "expected": "দ"},
+      {"input": "dh", "expected": "ধ"},
+      {"input": "n", "expected": "ন"},
+      {"input": "p", "expected": "প"},
+      {"input": "ph", "expected": "ফ"},
+      {"input": "f", "expected": "ফ"},
+      {"input": "b", "expected": "ব"},
+      {"input": "bh", "expected": "ভ"},
+      {"input": "v", "expected": "ভ"},
+      {"input": "m", "expected": "ম"},
+      {"input": "z", "expected": "য"},
+      {"input": "r", "expected": "র"},
+      {"input": "l", "expected": "ল"},
+      {"input": "sh", "expected": "শ"},
+      {"input": "S", "expected": "শ"},
+      {"input": "Sh", "expected": "ষ"},
+      {"input": "s", "expected": "স"},
+      {"input": "h", "expected": "হ"},
+      {"input": "R", "expected": "ড়"},
+      {"input": "Rh", "expected": "ঢ়"},
+      {"input": "y", "expected": "য়"}
+    ]
+  },
+  {
+    "category": "Kar and Vowel Signs",
+    "cases": [
+      {"input": "ka", "expected": "কা"},
+      {"input": "ki", "expected": "কি"},
+      {"input": "kI", "expected": "কী"},
+      {"input": "ku", "expected": "কু"},
+      {"input": "kU", "expected": "কূ"},
+      {"input": "ke", "expected": "কে"},
+      {"input": "kOI", "expected": "কৈ"},
+      {"input": "kO", "expected": "কো"},
+      {"input": "kOU", "expected": "কৌ"}
+    ]
+  },
+  {
+    "category": "Bengali Digits",
+    "cases": [
+      {"input": "0", "expected": "০"},
+      {"input": "1", "expected": "১"},
+      {"input": "2", "expected": "২"},
+      {"input": "3", "expected": "৩"},
+      {"input": "4", "expected": "৪"},
+      {"input": "5", "expected": "৫"},
+      {"input": "6", "expected": "৬"},
+      {"input": "7", "expected": "৭"},
+      {"input": "8", "expected": "৮"},
+      {"input": "9", "expected": "৯"}
+    ]
+  },
+  {
+    "category": "Special Symbols and Punctuation",
+    "cases": [
+      {"input": "t``", "expected": "ৎ"},
+      {"input": "ng", "expected": "ং"},
+      {"input": ":", "expected": "ঃ"},
+      {"input": "^", "expected": "ঁ"},
+      {"input": ".", "expected": "।"}
+    ]
+  },
+  {
+    "category": "Conjuncts (Juktakkhor)",
+    "cases": [
+      {"input": "kkh", "expected": "ক্ষ"},
+      {"input": "gg", "expected": "জ্ঞ"},
+      {"input": "Ngk", "expected": "ঙ্ক"},
+      {"input": "Ngkh", "expected": "ঙ্খ"},
+      {"input": "kt", "expected": "ক্ত"},
+      {"input": "nd", "expected": "ন্দ"},
+      {"input": "nt", "expected": "ন্ত"},
+      {"input": "mp", "expected": "ম্প"},
+      {"input": "st", "expected": "স্ত"},
+      {"input": "sT", "expected": "স্ট"}
+    ]
+  },
+  {
+    "category": "Common Words and Phrases",
+    "cases": [
+      {"input": "ami", "expected": "আমি"},
+      {"input": "bangla", "expected": "বাংলা"},
+      {"input": "bangladesh", "expected": "বাংলাদেশ"},
+      {"input": "kemon", "expected": "কেমন"},
+      {"input": "achO", "expected": "আছো"},
+      {"input": "dhonnyobad", "expected": "ধন্যবাদ"},
+      {"input": "shagotom", "expected": "স্বাগতম"},
+      {"input": "bhalobasha", "expected": "ভালোবাসা"}
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+# Build outputs
+target/
+dist/
+*.so
+*.a
+*.o
+*.deb
+*.tar.gz
+
+# IDE and tool caches
+.cargo/
+.idea/
+.vscode/
+*~
+*.swp
