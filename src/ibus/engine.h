@@ -33,6 +33,9 @@ struct _BanglaLekhiIBusEngine {
     /* Auxiliary status and state */
     gboolean is_composing;
     gboolean alt_gr_active;
+
+    /* Runtime config: toggle key (IBus keyval, default IBUS_KEY_F12) */
+    guint toggle_keyval;
 };
 
 void bangla_lekhi_ibus_engine_register_type(IBusFactory *factory);

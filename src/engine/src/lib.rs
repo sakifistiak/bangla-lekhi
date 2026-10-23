@@ -4,6 +4,7 @@
 //! and C-ABI export for the IBus input method engine.
 
 pub mod c_abi;
+pub mod config;
 pub mod phonetic;
 pub mod state;
 pub mod suggest;

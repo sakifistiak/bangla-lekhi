@@ -6,6 +6,8 @@
  */
 
 #include "engine.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 G_DEFINE_TYPE(BanglaLekhiIBusEngine, bangla_lekhi_ibus_engine, IBUS_TYPE_ENGINE)
@@ -23,6 +25,63 @@ static void update_preedit_and_lookup_table(BanglaLekhiIBusEngine *self);
 static void commit_current_composition(BanglaLekhiIBusEngine *self, guint candidate_idx);
 static void reset_engine_state(BanglaLekhiIBusEngine *self);
 
+/* ── Config helpers (minimal JSON reader — no external deps) ─────────────── */
+
+/**
+ * Read the "toggle_key" field from ~/.config/bangla-lekhi/settings.json.
+ * Supported values: "F1"–"F12", "F9", "F10", "F11", "F12" (default).
+ * Returns the IBus keyval, defaulting to IBUS_KEY_F12.
+ */
+static guint load_toggle_keyval(void) {
+    const char *xdg_config = getenv("XDG_CONFIG_HOME");
+    const char *home = getenv("HOME");
+    char path[512] = {0};
+
+    if (xdg_config) {
+        snprintf(path, sizeof(path), "%s/bangla-lekhi/settings.json", xdg_config);
+    } else if (home) {
+        snprintf(path, sizeof(path), "%s/.config/bangla-lekhi/settings.json", home);
+    } else {
+        return IBUS_KEY_F12;
+    }
+
+    FILE *f = fopen(path, "r");
+    if (!f) return IBUS_KEY_F12;
+
+    char buf[2048] = {0};
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    if (n == 0) return IBUS_KEY_F12;
+
+    /* Minimal "toggle_key" extraction — look for "toggle_key": "FN" */
+    char *pos = strstr(buf, "\"toggle_key\"");
+    if (!pos) return IBUS_KEY_F12;
+    pos = strchr(pos, ':');
+    if (!pos) return IBUS_KEY_F12;
+    pos++;
+    while (*pos == ' ' || *pos == '\t') pos++;
+    if (*pos != '"') return IBUS_KEY_F12;
+    pos++; /* skip opening quote */
+
+    char key_name[16] = {0};
+    int i = 0;
+    while (*pos && *pos != '"' && i < 15) {
+        key_name[i++] = *pos++;
+    }
+
+    /* Map key name to IBus keyval */
+    struct { const char *name; guint val; } map[] = {
+        {"F1",  IBUS_KEY_F1},  {"F2",  IBUS_KEY_F2},  {"F3",  IBUS_KEY_F3},
+        {"F4",  IBUS_KEY_F4},  {"F5",  IBUS_KEY_F5},  {"F6",  IBUS_KEY_F6},
+        {"F7",  IBUS_KEY_F7},  {"F8",  IBUS_KEY_F8},  {"F9",  IBUS_KEY_F9},
+        {"F10", IBUS_KEY_F10}, {"F11", IBUS_KEY_F11}, {"F12", IBUS_KEY_F12},
+    };
+    for (size_t j = 0; j < sizeof(map) / sizeof(map[0]); j++) {
+        if (strcmp(key_name, map[j].name) == 0) return map[j].val;
+    }
+    return IBUS_KEY_F12;
+}
+
 static void bangla_lekhi_ibus_engine_init(BanglaLekhiIBusEngine *self) {
     self->core = bangla_lekhi_engine_new();
     self->table = ibus_lookup_table_new(9, 0, TRUE, TRUE);
@@ -30,6 +89,8 @@ static void bangla_lekhi_ibus_engine_init(BanglaLekhiIBusEngine *self) {
     ibus_lookup_table_set_orientation(self->table, IBUS_ORIENTATION_VERTICAL);
     self->is_composing = FALSE;
     self->alt_gr_active = FALSE;
+    self->toggle_keyval = load_toggle_keyval();
+    g_message("Bangla Lekhi: toggle key loaded as keyval 0x%04X", self->toggle_keyval);
 }
 
 static void bangla_lekhi_ibus_engine_finalize(GObject *object) {
@@ -155,8 +216,8 @@ static gboolean engine_process_key_event(IBusEngine *engine, guint keyval, guint
         return FALSE;
     }
 
-    // Global Mode Toggle (Default: F12)
-    if (keyval == IBUS_KEY_F12) {
+    // Global Mode Toggle (configurable, default: F12)
+    if (keyval == self->toggle_keyval) {
         if (bangla_lekhi_engine_has_composition(self->core)) {
             commit_current_composition(self, 0);
         }

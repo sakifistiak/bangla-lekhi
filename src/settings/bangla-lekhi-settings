@@ -1,0 +1,446 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""
+Bangla Lekhi Settings Application
+GTK4 / Libadwaita settings UI for the Bangla Lekhi input method.
+
+Features:
+  - Toggle key configuration
+  - Autocorrect enable/disable
+  - User dictionary manager (view/add/remove words)
+  - Autostart toggle
+  - Diagnostics (IBus status, engine version)
+"""
+
+import gi
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+from gi.repository import Adw, Gio, GLib, Gtk
+
+APP_ID = "io.github.bangla_lekhi.Settings"
+VERSION = "1.0.0"
+
+# ── Paths ────────────────────────────────────────────────────────────────────
+
+CONFIG_DIR  = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "bangla-lekhi"
+DATA_DIR    = Path(os.environ.get("XDG_DATA_HOME",   Path.home() / ".local" / "share")) / "bangla-lekhi"
+CONFIG_FILE = CONFIG_DIR / "settings.json"
+USER_WORDS  = DATA_DIR  / "user_words.json"
+AUTOSTART_DIR = Path.home() / ".config" / "autostart"
+AUTOSTART_FILE = AUTOSTART_DIR / "bangla-lekhi.desktop"
+
+DEFAULT_SETTINGS = {
+    "toggle_key":       "F12",
+    "autocorrect":      True,
+    "show_candidates":  True,
+    "candidate_count":  5,
+}
+
+# ── Config helpers ────────────────────────────────────────────────────────────
+
+def load_settings() -> dict:
+    if CONFIG_FILE.exists():
+        try:
+            return {**DEFAULT_SETTINGS, **json.loads(CONFIG_FILE.read_text())}
+        except Exception:
+            pass
+    return dict(DEFAULT_SETTINGS)
+
+
+def save_settings(settings: dict) -> None:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE.write_text(json.dumps(settings, indent=2, ensure_ascii=False))
+
+
+def load_user_words() -> list[str]:
+    if USER_WORDS.exists():
+        try:
+            return json.loads(USER_WORDS.read_text())
+        except Exception:
+            pass
+    return []
+
+
+def save_user_words(words: list[str]) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    USER_WORDS.write_text(json.dumps(words, indent=2, ensure_ascii=False))
+
+
+def is_autostart_enabled() -> bool:
+    return AUTOSTART_FILE.exists()
+
+
+def set_autostart(enable: bool) -> None:
+    if enable:
+        AUTOSTART_DIR.mkdir(parents=True, exist_ok=True)
+        content = (
+            "[Desktop Entry]\n"
+            "Type=Application\n"
+            "Name=Bangla Lekhi\n"
+            "Comment=Bangla Lekhi phonetic input method\n"
+            "Exec=ibus-daemon -drx\n"
+            "X-GNOME-Autostart-enabled=true\n"
+            "Hidden=false\n"
+        )
+        AUTOSTART_FILE.write_text(content)
+    else:
+        AUTOSTART_FILE.unlink(missing_ok=True)
+
+
+def ibus_status() -> str:
+    try:
+        result = subprocess.run(
+            ["ibus", "engine"],
+            capture_output=True, text=True, timeout=3
+        )
+        engine = result.stdout.strip() or "(none)"
+        return f"Current engine: {engine}"
+    except FileNotFoundError:
+        return "IBus not found"
+    except subprocess.TimeoutExpired:
+        return "IBus not responding"
+    except Exception as e:
+        return f"Error: {e}"
+
+
+# ── Main Application Window ───────────────────────────────────────────────────
+
+class BanglaLekhiSettings(Adw.ApplicationWindow):
+    def __init__(self, app: Adw.Application) -> None:
+        super().__init__(application=app, title="Bangla Lekhi — Settings")
+        self.set_default_size(620, 580)
+        self.set_size_request(400, 400)
+
+        self._settings = load_settings()
+        self._user_words = load_user_words()
+        self._dirty = False  # settings have unsaved changes
+
+        self._build_ui()
+
+    # ── UI construction ───────────────────────────────────────────────────────
+
+    def _build_ui(self) -> None:
+        # Header bar
+        header = Adw.HeaderBar()
+        save_btn = Gtk.Button(label="Save")
+        save_btn.add_css_class("suggested-action")
+        save_btn.connect("clicked", self._on_save)
+        header.pack_end(save_btn)
+
+        # Navigation / content area
+        view_stack = Adw.ViewStack()
+        switcher_bar = Adw.ViewSwitcherBar()
+        switcher_bar.set_stack(view_stack)
+
+        switcher_title = Adw.ViewSwitcherTitle()
+        switcher_title.set_stack(view_stack)
+        header.set_title_widget(switcher_title)
+
+        # Pages
+        view_stack.add_titled_with_icon(
+            self._build_general_page(), "general", "General",
+            "preferences-system-symbolic"
+        )
+        view_stack.add_titled_with_icon(
+            self._build_dictionary_page(), "dictionary", "Dictionary",
+            "accessories-dictionary-symbolic"
+        )
+        view_stack.add_titled_with_icon(
+            self._build_diagnostics_page(), "diagnostics", "Diagnostics",
+            "system-search-symbolic"
+        )
+
+        # Layout
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.append(header)
+        box.append(view_stack)
+        box.append(switcher_bar)
+        view_stack.set_vexpand(True)
+
+        self.set_content(box)
+
+    # ── General page ──────────────────────────────────────────────────────────
+
+    def _build_general_page(self) -> Gtk.Widget:
+        clamp = Adw.Clamp()
+        clamp.set_margin_top(24)
+        clamp.set_margin_bottom(24)
+        clamp.set_margin_start(12)
+        clamp.set_margin_end(12)
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        clamp.set_child(vbox)
+
+        # ── Input section ──
+        input_group = Adw.PreferencesGroup(title="Input Behaviour")
+        vbox.append(input_group)
+
+        # Toggle key
+        toggle_row = Adw.ActionRow(
+            title="Toggle Key",
+            subtitle="Switch between English and Bangla mode"
+        )
+        self._toggle_key_entry = Gtk.Entry()
+        self._toggle_key_entry.set_text(self._settings["toggle_key"])
+        self._toggle_key_entry.set_valign(Gtk.Align.CENTER)
+        self._toggle_key_entry.set_max_width_chars(8)
+        self._toggle_key_entry.connect("changed", lambda e: self._mark_dirty())
+        toggle_row.add_suffix(self._toggle_key_entry)
+        input_group.add(toggle_row)
+
+        # Autocorrect
+        ac_row = Adw.SwitchRow(
+            title="Autocorrect",
+            subtitle="Automatically fix common phonetic mistakes"
+        )
+        ac_row.set_active(self._settings["autocorrect"])
+        ac_row.connect("notify::active", lambda r, _: self._mark_dirty())
+        self._ac_row = ac_row
+        input_group.add(ac_row)
+
+        # Show candidates
+        cand_row = Adw.SwitchRow(
+            title="Show Candidates",
+            subtitle="Display word suggestions while typing"
+        )
+        cand_row.set_active(self._settings["show_candidates"])
+        cand_row.connect("notify::active", lambda r, _: self._mark_dirty())
+        self._cand_row = cand_row
+        input_group.add(cand_row)
+
+        # Candidate count
+        count_row = Adw.SpinRow.new_with_range(1, 10, 1)
+        count_row.set_title("Candidate Count")
+        count_row.set_subtitle("Maximum suggestions shown at once")
+        count_row.set_value(self._settings["candidate_count"])
+        count_row.connect("notify::value", lambda r, _: self._mark_dirty())
+        self._count_row = count_row
+        input_group.add(count_row)
+
+        # ── System section ──
+        sys_group = Adw.PreferencesGroup(title="System")
+        vbox.append(sys_group)
+
+        autostart_row = Adw.SwitchRow(
+            title="Start with System",
+            subtitle="Launch IBus daemon on login"
+        )
+        autostart_row.set_active(is_autostart_enabled())
+        autostart_row.connect("notify::active", self._on_autostart_toggled)
+        sys_group.add(autostart_row)
+
+        return clamp
+
+    # ── Dictionary page ───────────────────────────────────────────────────────
+
+    def _build_dictionary_page(self) -> Gtk.Widget:
+        clamp = Adw.Clamp()
+        clamp.set_margin_top(24)
+        clamp.set_margin_bottom(24)
+        clamp.set_margin_start(12)
+        clamp.set_margin_end(12)
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        clamp.set_child(vbox)
+
+        dict_group = Adw.PreferencesGroup(
+            title="User Dictionary",
+            description="Custom words that will always appear as top candidates"
+        )
+        vbox.append(dict_group)
+
+        # Add-word row
+        add_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self._new_word_entry = Gtk.Entry()
+        self._new_word_entry.set_placeholder_text("Type a Bangla word…")
+        self._new_word_entry.set_hexpand(True)
+        self._new_word_entry.connect("activate", self._on_add_word)
+        add_btn = Gtk.Button(label="Add")
+        add_btn.add_css_class("suggested-action")
+        add_btn.connect("clicked", self._on_add_word)
+        add_box.append(self._new_word_entry)
+        add_box.append(add_btn)
+        vbox.append(add_box)
+
+        # Word list
+        self._word_list_box = Gtk.ListBox()
+        self._word_list_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        self._word_list_box.add_css_class("boxed-list")
+        vbox.append(self._word_list_box)
+
+        self._refresh_word_list()
+
+        return clamp
+
+    def _refresh_word_list(self) -> None:
+        # Remove all children
+        child = self._word_list_box.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            self._word_list_box.remove(child)
+            child = next_child
+
+        if not self._user_words:
+            row = Adw.ActionRow(title="No custom words yet")
+            row.set_sensitive(False)
+            self._word_list_box.append(row)
+            return
+
+        for word in self._user_words:
+            row = Adw.ActionRow(title=word)
+            del_btn = Gtk.Button(icon_name="edit-delete-symbolic")
+            del_btn.set_valign(Gtk.Align.CENTER)
+            del_btn.add_css_class("destructive-action")
+            del_btn.add_css_class("flat")
+            del_btn.connect("clicked", self._on_delete_word, word)
+            row.add_suffix(del_btn)
+            self._word_list_box.append(row)
+
+    def _on_add_word(self, *_) -> None:
+        word = self._new_word_entry.get_text().strip()
+        if not word:
+            return
+        if word not in self._user_words:
+            self._user_words.append(word)
+            save_user_words(self._user_words)
+        self._new_word_entry.set_text("")
+        self._refresh_word_list()
+
+    def _on_delete_word(self, _btn, word: str) -> None:
+        if word in self._user_words:
+            self._user_words.remove(word)
+            save_user_words(self._user_words)
+        self._refresh_word_list()
+
+    # ── Diagnostics page ──────────────────────────────────────────────────────
+
+    def _build_diagnostics_page(self) -> Gtk.Widget:
+        clamp = Adw.Clamp()
+        clamp.set_margin_top(24)
+        clamp.set_margin_bottom(24)
+        clamp.set_margin_start(12)
+        clamp.set_margin_end(12)
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        clamp.set_child(vbox)
+
+        info_group = Adw.PreferencesGroup(title="System Information")
+        vbox.append(info_group)
+
+        def _make_info_row(title: str, value: str) -> Adw.ActionRow:
+            row = Adw.ActionRow(title=title)
+            lbl = Gtk.Label(label=value)
+            lbl.add_css_class("dim-label")
+            lbl.set_valign(Gtk.Align.CENTER)
+            row.add_suffix(lbl)
+            return row
+
+        info_group.add(_make_info_row("Version", VERSION))
+        info_group.add(_make_info_row("Config file", str(CONFIG_FILE)))
+        info_group.add(_make_info_row("Data directory", str(DATA_DIR)))
+
+        # IBus status (live)
+        ibus_group = Adw.PreferencesGroup(title="IBus Status")
+        vbox.append(ibus_group)
+
+        self._ibus_status_row = Adw.ActionRow(title="Engine", subtitle=ibus_status())
+        refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic")
+        refresh_btn.set_valign(Gtk.Align.CENTER)
+        refresh_btn.add_css_class("flat")
+        refresh_btn.connect("clicked", self._on_refresh_ibus)
+        self._ibus_status_row.add_suffix(refresh_btn)
+        ibus_group.add(self._ibus_status_row)
+
+        # Restart IBus button
+        restart_group = Adw.PreferencesGroup(title="Actions")
+        vbox.append(restart_group)
+
+        restart_row = Adw.ActionRow(
+            title="Restart IBus",
+            subtitle="Apply engine changes (closes all composition sessions)"
+        )
+        restart_btn = Gtk.Button(label="Restart")
+        restart_btn.set_valign(Gtk.Align.CENTER)
+        restart_btn.add_css_class("destructive-action")
+        restart_btn.connect("clicked", self._on_restart_ibus)
+        restart_row.add_suffix(restart_btn)
+        restart_group.add(restart_row)
+
+        return clamp
+
+    def _on_refresh_ibus(self, *_) -> None:
+        self._ibus_status_row.set_subtitle(ibus_status())
+
+    def _on_restart_ibus(self, *_) -> None:
+        dialog = Adw.AlertDialog(
+            heading="Restart IBus?",
+            body="This will close all active input sessions. Continue?"
+        )
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("restart", "Restart IBus")
+        dialog.set_response_appearance("restart", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.set_default_response("cancel")
+        dialog.connect("response", self._do_restart_ibus)
+        dialog.present(self)
+
+    def _do_restart_ibus(self, _dialog, response: str) -> None:
+        if response != "restart":
+            return
+        try:
+            subprocess.Popen(["ibus", "restart"])
+        except FileNotFoundError:
+            pass
+        GLib.timeout_add(1500, self._on_refresh_ibus)
+
+    # ── Save / dirty tracking ─────────────────────────────────────────────────
+
+    def _mark_dirty(self) -> None:
+        self._dirty = True
+
+    def _on_save(self, *_) -> None:
+        self._settings["toggle_key"]      = self._toggle_key_entry.get_text().strip() or "F12"
+        self._settings["autocorrect"]     = self._ac_row.get_active()
+        self._settings["show_candidates"] = self._cand_row.get_active()
+        self._settings["candidate_count"] = int(self._count_row.get_value())
+        save_settings(self._settings)
+        self._dirty = False
+
+        toast = Adw.Toast(title="Settings saved")
+        toast.set_timeout(2)
+        self.get_content()  # just to keep reference alive
+
+
+    def _on_autostart_toggled(self, row: Adw.SwitchRow, _param) -> None:
+        set_autostart(row.get_active())
+
+
+# ── Application entry ─────────────────────────────────────────────────────────
+
+class BanglaLekhiApp(Adw.Application):
+    def __init__(self) -> None:
+        super().__init__(
+            application_id=APP_ID,
+            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+        )
+
+    def do_activate(self) -> None:
+        win = self.get_active_window()
+        if win is None:
+            win = BanglaLekhiSettings(self)
+        win.present()
+
+
+def main() -> int:
+    app = BanglaLekhiApp()
+    return app.run(sys.argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

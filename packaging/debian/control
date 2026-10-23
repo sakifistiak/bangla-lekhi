@@ -1,0 +1,22 @@
+Package: bangla-lekhi
+Version: 1.0.0
+Architecture: amd64
+Maintainer: Bangla Lekhi Contributors <bangla-lekhi@example.com>
+Installed-Size: 5120
+Depends: ibus (>= 1.5.30), libibus-1.0-5, python3 (>= 3.10), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1
+Recommends: fonts-noto-core | fonts-beng
+Section: utils
+Priority: optional
+Homepage: https://github.com/example/bangla-lekhi
+Description: Bangla Lekhi — Native Bengali phonetic input method for Linux
+ Bangla Lekhi is a native IBus input method engine for typing Bengali
+ (Bangla) using Avro-compatible phonetic transliteration on Linux.
+ .
+ Features:
+  - Avro-compatible phonetic typing (system-wide: GTK, Qt, browsers)
+  - Instant candidate suggestions via upodesh FST dictionary
+  - Configurable toggle key (default F12)
+  - User custom word dictionary
+  - GTK4/Libadwaita settings application
+  - Lightweight Rust+C engine (~3 MB RAM usage)
+  - GPL-3.0-or-later licensed, 100% offline, no telemetry

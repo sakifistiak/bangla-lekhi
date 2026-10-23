@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Bangla Lekhi Settings
+GenericName=Bangla Input Settings
+Comment=Configure the Bangla Lekhi phonetic input method
+Exec=bangla-lekhi-settings
+Icon=bangla-lekhi
+Terminal=false
+Categories=Settings;GNOME;X-GNOME-Settings-Panel;
+Keywords=bangla;bengali;input;keyboard;ibus;phonetic;avro;
+StartupNotify=true
+StartupWMClass=bangla-lekhi-settings

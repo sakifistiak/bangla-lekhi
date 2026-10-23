@@ -1,0 +1,33 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: bangla-lekhi
+Upstream-Contact: Bangla Lekhi Contributors
+Source: https://github.com/example/bangla-lekhi
+
+Files: *
+Copyright: 2026 Bangla Lekhi Contributors
+License: GPL-3.0-or-later
+
+Files: src/engine/src/phonetic.rs
+       src/engine/src/suggest.rs
+Copyright: 2026 Bangla Lekhi Contributors
+           OpenBangla Project Contributors
+License: GPL-3.0-or-later
+Comment:
+ Phonetic parsing logic is derived from the Avro phonetic mapping tables
+ originally defined by Mehdi Hasan Khan in the Avro Keyboard project.
+ The okkhor and upodesh crates used for transliteration and suggestion
+ are separately licensed under MPL-2.0.
+
+License: GPL-3.0-or-later
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the full text of the GNU General Public License
+ version 3 can be found in `/usr/share/common-licenses/GPL-3'.
