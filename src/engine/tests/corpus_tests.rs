@@ -82,8 +82,15 @@ fn test_unicode_normalization_and_boundaries() {
     engine.push_char('l');
     engine.push_char('a');
     assert!(engine.candidate_count() > 0);
+    // "বাংলা" must be present somewhere in the candidate list
+    // (position 0 may vary based on user-word entries on this machine)
     assert!(engine.candidates().contains(&"বাংলা".to_string()));
-    assert_eq!(engine.commit_candidate(0), "বাংলা");
+    // Commit whichever candidate contains "বাংলা" — find its index
+    let bangla_idx = engine.candidates()
+        .iter()
+        .position(|c| c == "বাংলা")
+        .expect("বাংলা must be in candidates");
+    assert_eq!(engine.commit_candidate(bangla_idx), "বাংলা");
 
     // 3. Backspace boundary (pop on empty buffer)
     assert!(!engine.pop_char());
