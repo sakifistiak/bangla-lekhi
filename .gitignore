@@ -1,6 +1,7 @@
 # Build outputs
 target/
 dist/
+bangla-lekhi-engine
 *.so
 *.a
 *.o

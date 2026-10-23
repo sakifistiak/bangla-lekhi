@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- filename: bangla-lekhi.xml -->
+<component>
+    <name>org.freedesktop.IBus.BanglaLekhi</name>
+    <description>Bangla Lekhi Input Method</description>
+    <exec>/usr/lib/bangla-lekhi/bangla-lekhi-engine --ibus</exec>
+    <version>1.0.0</version>
+    <author>Bangla Lekhi Contributors</author>
+    <license>GPL-3.0-or-later</license>
+    <homepage>https://github.com/bangla-lekhi</homepage>
+    <textdomain>bangla-lekhi</textdomain>
+    <engines>
+        <engine>
+            <name>bangla-lekhi</name>
+            <language>bn</language>
+            <license>GPL-3.0-or-later</license>
+            <author>Bangla Lekhi Contributors</author>
+            <icon>/usr/share/icons/hicolor/scalable/apps/bangla-lekhi.svg</icon>
+            <layout>default</layout>
+            <longname>Bangla Lekhi (Avro Phonetic)</longname>
+            <description>Native Bengali Phonetic Input Method for Linux</description>
+            <rank>99</rank>
+        </engine>
+    </engines>
+</component>
