@@ -14,3 +14,6 @@ bangla-lekhi-engine
 .vscode/
 *~
 *.swp
+__pycache__/
+*.pyc
+packaging/bangla-lekhi_*/
