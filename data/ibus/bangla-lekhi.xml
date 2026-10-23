@@ -15,8 +15,8 @@
             <language>bn</language>
             <license>GPL-3.0-or-later</license>
             <author>Bangla Lekhi Contributors</author>
-            <icon>/usr/share/icons/hicolor/scalable/apps/bangla-lekhi.svg</icon>
-            <layout>default</layout>
+            <icon>/home/sakifistiak/.local/share/icons/hicolor/scalable/apps/bangla-lekhi.svg</icon>
+            <layout>us</layout>
             <longname>Bangla Lekhi (Avro Phonetic)</longname>
             <description>Native Bengali Phonetic Input Method for Linux</description>
             <rank>99</rank>
