@@ -15,8 +15,9 @@ Description: Bangla Lekhi — Native Bengali phonetic input method for Linux
  Features:
   - Avro-compatible phonetic typing (system-wide: GTK, Qt, browsers)
   - Instant candidate suggestions via upodesh FST dictionary
-  - Configurable toggle key (default F12)
+  - Configurable toggle key (default F12; Ctrl+Space supported)
   - User custom word dictionary
+  - Clipboard history sourced from the system clipboard
   - GTK4/Libadwaita settings application
   - Lightweight Rust+C engine (~3 MB RAM usage)
   - GPL-3.0-or-later licensed, 100% offline, no telemetry

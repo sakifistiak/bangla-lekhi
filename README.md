@@ -15,7 +15,8 @@ Bangla Lekhi is a fast, native IBus input method engine for typing Bengali (Bang
 |---|---|
 | **Phonetic Layout** | Avro-compatible (same as Windows Avro Keyboard) |
 | **Engine** | Rust core + C IBus daemon — ~3 MB RAM |
-| **Suggestions** | FST-powered Bengali dictionary via `upodesh` |
+| **Suggestions** | FST-powered Bengali candidates plus common-word prefix suggestions |
+| **Clipboard History** | In-memory history from desktop clipboard changes (up to nine entries) |
 | **Toggle Key** | F12 (configurable via Settings) |
 | **Settings UI** | GTK4 / Libadwaita native app |
 | **Offline** | 100% offline, no telemetry |
@@ -60,6 +61,21 @@ bangla-lekhi-settings
 | `jny` | জন্য | `t\`` | ৎ |
 | `.` | । | `0`–`9` | ০–৯ |
 
+When a common word prefix is typed, candidates are also shown (for example, `b`
+offers `ব`, `বাংলা`, `বাংলাদেশ`, and other common words; `bi` offers `বি`,
+`বিয়ে`, and `বিড়াল`). Use Up/Down and Enter, or click a candidate in the
+lookup table. Number keys type Bengali digits (for example, `1` produces `১`)
+rather than selecting a candidate.
+
+Press `Ctrl+Shift+V` to open clipboard history and select an item to paste.
+History keeps up to nine clipboard text entries in memory until the IBus engine
+exits. The engine reads the desktop clipboard while running; password/private
+input fields are excluded when the application marks them as sensitive.
+
+Choose the mode toggle in **Bangla Lekhi Settings → General → Toggle Key**.
+`Ctrl+Space` can conflict with IBus or GNOME's input-source shortcut; disable
+that system shortcut if you select it.
+
 ---
 
 ## Building from Source
@@ -88,8 +104,7 @@ make deb          # build .deb package
 ### Local Testing (no install needed)
 
 ```sh
-make register-local   # installs to ~/.local/
-ibus restart          # restart IBus daemon
+make register-local   # builds, installs, refreshes IBus registry, and restarts IBus
 ```
 
 ---

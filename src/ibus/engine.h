@@ -33,6 +33,10 @@ struct _BanglaLekhiIBusEngine {
     /* Auxiliary status and state */
     gboolean is_composing;
     gboolean alt_gr_active;
+    gboolean showing_clipboard_history;
+    gboolean sensitive_context;
+    gboolean toggle_ctrl;
+    gchar *selected_text;
 
     /* Runtime config: toggle key (IBus keyval, default IBUS_KEY_F12) */
     guint toggle_keyval;

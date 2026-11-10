@@ -6,9 +6,8 @@
 
 **Fix:**
 ```sh
-ibus write-cache
-ibus restart
-# Then log out and log back in if still not visible
+make register-local
+# Then select Bangla Lekhi from the input-source menu
 ```
 
 Verify the component is registered:
@@ -39,6 +38,15 @@ journalctl --user -xe | grep -i bangla
 
 ---
 
+## Clipboard History Is Empty
+
+The history is collected from text changes in the desktop clipboard while the
+Bangla Lekhi engine is running. Copy text after activating the engine, then press
+`Ctrl+Shift+V`. Password/private fields are ignored when the application reports
+them as sensitive.
+
+---
+
 ## Toggle Key Not Working
 
 If F12 is captured by your terminal or desktop:
@@ -47,6 +55,9 @@ If F12 is captured by your terminal or desktop:
 2. Go to **General → Toggle Key**
 3. Change to e.g. `F9` or `F10`
 4. Click **Save** and run `ibus restart`
+
+`Ctrl+Space` may be intercepted by IBus or GNOME as an input-source shortcut.
+Disable that shortcut before assigning it as Bangla Lekhi's mode toggle.
 
 ---
 

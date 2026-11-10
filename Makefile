@@ -64,15 +64,18 @@ test: core
 	rm -f tests/unit/test_c_abi
 	@echo "==> All Tests Passed (100%)!"
 
-register-local: engine install-settings
+register-local: core engine install-settings
 	@echo "==> Registering Bangla Lekhi locally for user testing..."
 	mkdir -p $(LOCAL_BIN)
 	mkdir -p $(IBUS_COMPONENT_DIR)
-	cp $(BIN) $(LOCAL_BIN)/bangla-lekhi-engine
+	install -m 755 $(BIN) $(LOCAL_BIN)/.bangla-lekhi-engine.new
+	mv -f $(LOCAL_BIN)/.bangla-lekhi-engine.new $(LOCAL_BIN)/bangla-lekhi-engine
 	sed 's|/usr/lib/bangla-lekhi/bangla-lekhi-engine|$(LOCAL_BIN)/bangla-lekhi-engine|g' \
 		data/ibus/bangla-lekhi.xml > $(IBUS_COMPONENT_DIR)/bangla-lekhi.xml
+	IBUS_COMPONENT_PATH="$(IBUS_COMPONENT_DIR):/usr/share/ibus/component" ibus write-cache
+	ibus restart || ibus start
 	@echo "==> Local component installed at: $(IBUS_COMPONENT_DIR)/bangla-lekhi.xml"
-	@echo "==> To activate without logout, run: ibus restart"
+	@echo "==> Select Bangla Lekhi in the input-source menu to start typing."
 
 install-settings:
 	@echo "==> Installing settings app and icon..."

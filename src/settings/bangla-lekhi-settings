@@ -42,6 +42,7 @@ DEFAULT_SETTINGS = {
     "show_candidates":  True,
     "candidate_count":  5,
 }
+TOGGLE_OPTIONS = ["F12", "Ctrl+Space"] + [f"F{i}" for i in range(1, 12)]
 
 # ── Config helpers ────────────────────────────────────────────────────────────
 
@@ -185,14 +186,17 @@ class BanglaLekhiSettings(Adw.ApplicationWindow):
         # Toggle key
         toggle_row = Adw.ActionRow(
             title="Toggle Key",
-            subtitle="Switch between English and Bangla mode"
+            subtitle="F-key or Ctrl+Space (disable the IBus shortcut if it conflicts)"
         )
-        self._toggle_key_entry = Gtk.Entry()
-        self._toggle_key_entry.set_text(self._settings["toggle_key"])
-        self._toggle_key_entry.set_valign(Gtk.Align.CENTER)
-        self._toggle_key_entry.set_max_width_chars(8)
-        self._toggle_key_entry.connect("changed", lambda e: self._mark_dirty())
-        toggle_row.add_suffix(self._toggle_key_entry)
+        self._toggle_key_dropdown = Gtk.DropDown.new(
+            Gtk.StringList.new(TOGGLE_OPTIONS), None
+        )
+        toggle = self._settings["toggle_key"]
+        self._toggle_key_dropdown.set_selected(
+            TOGGLE_OPTIONS.index(toggle) if toggle in TOGGLE_OPTIONS else 0
+        )
+        self._toggle_key_dropdown.connect("notify::selected", lambda *_: self._mark_dirty())
+        toggle_row.add_suffix(self._toggle_key_dropdown)
         input_group.add(toggle_row)
 
         # Autocorrect
@@ -405,7 +409,7 @@ class BanglaLekhiSettings(Adw.ApplicationWindow):
         self._dirty = True
 
     def _on_save(self, *_) -> None:
-        self._settings["toggle_key"]      = self._toggle_key_entry.get_text().strip() or "F12"
+        self._settings["toggle_key"]      = TOGGLE_OPTIONS[self._toggle_key_dropdown.get_selected()]
         self._settings["autocorrect"]     = self._ac_row.get_active()
         self._settings["show_candidates"] = self._cand_row.get_active()
         self._settings["candidate_count"] = int(self._count_row.get_value())

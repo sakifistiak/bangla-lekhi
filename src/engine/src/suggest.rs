@@ -7,6 +7,19 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use upodesh::avro::Suggest;
 
+const COMMON_WORDS: &[(&str, &str)] = &[
+    ("bangla", "বাংলা"),
+    ("bangladesh", "বাংলাদেশ"),
+    ("bangali", "বাঙালি"),
+    ("bangladeshi", "বাংলাদেশি"),
+    ("bhalo", "ভালো"),
+    ("bondhu", "বন্ধু"),
+    ("baba", "বাবা"),
+    ("bhai", "ভাই"),
+    ("biye", "বিয়ে"),
+    ("biral", "বিড়াল"),
+];
+
 pub struct SuggestionEngine {
     suggest: Mutex<Suggest>,
     phonetic: PhoneticParser,
@@ -93,6 +106,22 @@ impl SuggestionEngine {
         // 1. Direct phonetic transliteration
         let direct = self.phonetic.parse(input);
 
+        // Offer short-prefix completions without changing longer word composition.
+        let prefix = input.to_ascii_lowercase();
+        let has_common_prefix = input.len() <= 2
+            && COMMON_WORDS.iter().any(|(phonetic, _)| phonetic.starts_with(&prefix));
+        if has_common_prefix && !direct.is_empty() {
+            results.push(direct.clone());
+        }
+        for (phonetic, word) in COMMON_WORDS {
+            if has_common_prefix
+                && phonetic.starts_with(&prefix)
+                && !results.contains(&word.to_string())
+            {
+                results.push((*word).to_string());
+            }
+        }
+
         // 2. Check autocorrect map
         {
             let ac_lock = self.autocorrect_map.lock().unwrap();
@@ -107,7 +136,7 @@ impl SuggestionEngine {
         {
             let uw_lock = self.user_words.lock().unwrap();
             for word in uw_lock.iter() {
-                if word.starts_with(&direct) || (direct.len() > 1 && word.contains(&direct)) {
+                if word.starts_with(&direct) {
                     if !results.contains(word) {
                         results.push(word.clone());
                     }
@@ -177,6 +206,18 @@ mod tests {
         assert!(!c_bhalobashi.is_empty(), "bhalobashi should produce candidates");
         assert!(c_bhalobashi.contains(&"ভালোবাসি".to_string()), "ভালোবাসি must be in bhalobashi candidates");
 
+        let c_b = engine.get_candidates("b");
+        assert_eq!(c_b.first().map(String::as_str), Some("ব"));
+        assert!(c_b.contains(&"বাংলাদেশ".to_string()));
+        assert!(c_b.contains(&"বাংলা".to_string()));
+
+        let c_bi = engine.get_candidates("bi");
+        assert_eq!(c_bi.first().map(String::as_str), Some("বি"));
+        assert!(c_bi.contains(&"বি".to_string()));
+        assert!(c_bi.contains(&"বিয়ে".to_string()));
+        assert!(c_bi.contains(&"বিড়াল".to_string()));
+        assert!(engine.get_candidates("1").contains(&"১".to_string()));
+
         // Cleanup
         let _ = std::fs::remove_dir_all(&tmp);
     }
@@ -194,6 +235,10 @@ mod tests {
         assert!(
             candidates.contains(&custom_word.to_string()),
             "custom word 'বাংলালেখি' should appear in candidates for 'banglalekhi'"
+        );
+        assert!(
+            !engine.get_candidates("l").contains(&custom_word.to_string()),
+            "an unrelated single-letter input must not match a custom word substring"
         );
 
         let _ = std::fs::remove_dir_all(&tmp);
