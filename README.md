@@ -170,6 +170,6 @@ See [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) for more.
 
 ## License
 
-GPL-3.0-or-later — see [COPYING](COPYING).
+GPL-3.0-or-later — see [LICENSE](LICENSE).
 
 The `okkhor` and `upodesh` crates are licensed under MPL-2.0.
